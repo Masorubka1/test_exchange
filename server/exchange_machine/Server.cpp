@@ -2,8 +2,8 @@
 #include <iostream>
 #include <boost/bind/bind.hpp>
 #include <boost/asio.hpp>
-#include "json.hpp"
-#include "Common.hpp"
+#include "common/json.hpp"
+#include "common/Common.hpp"
 
 using boost::asio::ip::tcp;
 
