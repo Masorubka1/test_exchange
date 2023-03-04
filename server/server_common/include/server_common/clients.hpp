@@ -1,27 +1,29 @@
-#ifndef SINGLETOON_CLIENTS_HPP
-#define SINGLETOON_CLIENTS_HPP
+//#ifndef SINGLETOON_CLIENTS_HPP
+//#define SINGLETOON_CLIENTS_HPP
+#pragma once
 
 #include "common/client.hpp"
 
+#include <map>
 #include <memory>
+
 
 namespace server {
 
-class MapClients : public std::enable_shared_from_this<MapClients> {
+class MapClients {
 public:
-	void add(const common::InfoClient& client) noexcept;
-	void check(const common::InfoClient& client) const noexcept;
+	void add(const client::InfoClient& client) noexcept;
+	bool check(const client::InfoClient& client) const noexcept;
 	//void check(const size_t hash_client);
-	void remove(const common::InfoClient& client) noexcept;
+	void remove(const client::InfoClient& client) noexcept;
 	//void remove(const size_t hash_client);
+	static MapClients& inst();
+	//~MapClients();
 private:
-	MapClients() = delete;
-	static std::shared_ptr<MapClients> instanse() {
-		return this;
-	}
-	static std::map<size_t, common::InfoClient> registered_users;
+	MapClients() {};
+	std::map<size_t, client::InfoClient> registered_users;
 };
 
 }
 
-#endif
+//#endif

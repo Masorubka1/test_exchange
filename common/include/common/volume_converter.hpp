@@ -1,5 +1,6 @@
-#ifndef VOLUME_CONVERTER_HPP
-#define VOLUME_CONVERTER_HPP
+//#ifndef VOLUME_CONVERTER_HPP
+//#define VOLUME_CONVERTER_HPP
+#pragma once
 
 namespace common {
     // add virtual base class for SWAP + FUTURES + SPOT
@@ -10,4 +11,4 @@ namespace common {
     };
 }
 
-#endif
+//#endif

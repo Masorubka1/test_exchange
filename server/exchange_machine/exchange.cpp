@@ -5,7 +5,7 @@
 namespace server {
 
 void Exchange::run() {
-	return; 
+	instrument_server_.run();
 }
 
 }

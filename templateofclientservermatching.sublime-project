@@ -2,7 +2,7 @@
 	"folders":
 	[
 		{
-			"path": "."
+			"path": ".",
 		}
 	],
 	"settings": {
@@ -13,9 +13,71 @@
             {
                 "BUILD_SHARED_LIBS": true,
                 "CMAKE_BUILD_TYPE": "Relise",
-                "CMAKE_EXPORT_COMPILE_COMMANDS": true
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true,
             },
             "generator": "Unix Makefiles",
-		}
+		},
 	},
+	"build_systems":
+	[
+		{
+			"config": "Relise",
+			"env":
+			{
+			},
+			"generator": "Unix Makefiles",
+			"name": "Relise",
+			"target": "cmake_build",
+			"variants":
+			[
+				{
+					"build_target": "client",
+					"name": "client"
+				},
+				{
+					"artifact": "client/client",
+					"build_target": "client",
+					"name": "Run: client",
+					"target": "cmake_run"
+				},
+				{
+					"artifact": "client/client",
+					"build_target": "client",
+					"debug": true,
+					"name": "Run under LLDB: client",
+					"target": "cmake_run"
+				},
+				{
+					"build_target": "common",
+					"name": "common"
+				},
+				{
+					"build_target": "exchange_machine",
+					"name": "exchange_machine"
+				},
+				{
+					"artifact": "server/exchange_machine/exchange_machine",
+					"build_target": "exchange_machine",
+					"name": "Run: exchange_machine",
+					"target": "cmake_run"
+				},
+				{
+					"artifact": "server/exchange_machine/exchange_machine",
+					"build_target": "exchange_machine",
+					"debug": true,
+					"name": "Run under LLDB: exchange_machine",
+					"target": "cmake_run"
+				},
+				{
+					"build_target": "server_common",
+					"name": "server_common"
+				},
+				{
+					"name": "ctest",
+					"target": "ctest_run"
+				}
+			],
+			"working_dir": "$folder/build"
+		}
+	],
 }

@@ -1,16 +1,19 @@
-#ifndef ORDERBOOK_HPP
-#define ORDERBOOK_HPP
+//#ifndef ORDERBOOK_HPP
+//#define ORDERBOOK_HPP
+#pragma once
 
 #include "order.hpp"
 
+#include <set>
 #include <map>
 #include <iostream>
 #include <optional>
+#include <iostream>
 
-namespace {
+namespace common {
 
 struct OrderBookCMP {
-    bool operator() (const common::InfoOrder& a, const common::InfoOrder& b) const
+    bool operator()(const common::InfoOrder& a, const common::InfoOrder& b) const
     {
         switch (a.full_order->order_type) {
             case common::OrderType::Ask:
@@ -25,9 +28,9 @@ struct OrderBookCMP {
     }
 };
 
-}
+//}
 
-namespace common {
+//namespace common {
 
 class OrderBookLevel {
 public:
@@ -41,7 +44,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const OrderBookLevel& book);
 private:
     OrderType type;
-    std::map<int64_t, InfoOrder, OrderBookCMP> level;
+    std::set<InfoOrder, OrderBookCMP> level;
 };
 
 class OrderBook {
@@ -53,11 +56,11 @@ public:
     void match();
     friend std::ostream& operator<<(std::ostream& os, const OrderBook& book);
 protected:
-    std::map<double, OrderBookLevel&> ask;  //will use price as key
-    std::map<double, OrderBookLevel&> bid;
+    std::map<double, std::unique_ptr<OrderBookLevel>> ask;  //will use price as key
+    std::map<double, std::unique_ptr<OrderBookLevel>> bid;
     void add_(InfoOrder&& order) noexcept;
     void remove_(InfoOrder&& order) noexcept;
 };
 
 }
-#endif
+//#endif

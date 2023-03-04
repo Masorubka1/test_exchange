@@ -1,5 +1,6 @@
-#ifndef CLIENT_HPP
-#define CLIENT_HPP
+//#ifndef ORDER_HPP
+//#define ORDER_HPP
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -21,9 +22,21 @@ struct Order {
     double volume = 0;
     double price = 0;
     bool is_limit = false;
+    Order(std::string instrument_, 
+    std::string hash_client_,
+    OrderType order_type_, 
+    OrderStatus order_status_, 
+    ExchangeType exchange_type_, 
+    int64_t timestamp_user_,
+    int64_t timestamp_exchange_,
+    double volume_,
+    double price_,
+    bool is_limit_) : instrument(instrument_),  hash_client(hash_client_),
+    order_type(order_type_), order_status(order_status_), timestamp_user(timestamp_user_),
+    timestamp_exchange(timestamp_exchange_), volume(volume_), price(price_), is_limit(is_limit_) {}
 };
 
-OrderType string2OrderType(std::string_view str) {
+OrderType string2OrderType(std::string str) {
     if (str == "Ask") {
         return OrderType::Ask;
     } else if (str == "Bid") {
@@ -71,4 +84,4 @@ std::ostream& operator<<(std::ostream& os, const InfoOrder& order) {
 
 }
 
-#endif
+//#endif

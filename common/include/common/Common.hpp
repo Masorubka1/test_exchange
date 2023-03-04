@@ -1,5 +1,6 @@
-#ifndef CLIENSERVERECN_COMMON_HPP
-#define CLIENSERVERECN_COMMON_HPP
+//#ifndef CLIENSERVERECN_COMMON_HPP
+//#define CLIENSERVERECN_COMMON_HPP
+#pragma once
 
 #include <string>
 
@@ -9,6 +10,8 @@ namespace Requests
 {
     static std::string Registration = "Reg";
     static std::string Hello = "Hel";
+    static std::string Close = "Close";
+    static std::string Transaction = "Tran";
 }
 
-#endif //CLIENSERVERECN_COMMON_HPP
+//#endif //CLIENSERVERECN_COMMON_HPP

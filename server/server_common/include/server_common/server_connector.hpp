@@ -1,30 +1,31 @@
-#ifndef SERVER_CONNECTOR
-#define SERVER_CONNECTOR
+//#ifndef SERVER_CONNECTOR_HPP
+//#define SERVER_CONNECTOR_HPP
+#pragma once
 
-#include "common/web_connector.hpp"
-#include "common/client.hpp"
 #include "server_common/clients.hpp"
+#include "server_common/timer.hpp"
+#include "common/order.hpp"
+#include "common/json.hpp"
+#include "common/Common.hpp"
+#include "common/web_connector.hpp"
 
+
+#include <string>
+#include <iostream>
 #include <boost/bind/bind.hpp>
 #include <boost/asio.hpp>
 
-#include <map>
-#include <memory>
-
 namespace server {
 
-class Session : public common::WebConnector, public std::enable_shared_from_this<Session> {
+class Session : public common::WebConnector {
 public:
-    Session(boost::asio::io_service& io_service) : socket_(io_service) {
-        socket_.async_read_some(new char[1],
-            boost::bind(&Session::start, this));
-    }
+    Session(boost::asio::io_service& io_service);
     
     void start() override;
     void stop() override;
 
     void read_msg(const boost::system::error_code& error, size_t bytes_transferred) override;
-    void send_msg(const boost::system::error_code& error) const override;
+    void send_msg(const boost::system::error_code& error) override;
     
     boost::asio::ip::tcp::socket& socket();
     int64_t getHashClient() const {
@@ -33,36 +34,29 @@ public:
     
     ~Session();
 private:
-    //boost::asio::ip::tcp::endpoint& endpoint_;
-    boost::asio::ip::tcp::socket& socket_;
-    //boost::asio::ip::tcp::acceptor& acceptor_;
-    //boost::asio::io_service& io_service_;
-    //boost::asio::streambuf streambuf_;
-    int32_t max_length = 1024;
-    //char data_[max_length];
-    char data_[1024];
+    std::string_view parse_event(nlohmann::json data);
+    boost::asio::ip::tcp::socket socket_;
+    enum { max_length = 1024 };
+    char data_[max_length];
     int64_t hash_client_ = -1;
 };
 
 class Server {
 public:
-    Server(const std::string_view& uri = "127.0.0.1", const std::string_view& port = "5555");
-    //void send_message(const InfoClient& client, const std::string_view& message);
-    //std::string_view read_message(const InfoClient& client);
+    Server(const std::string_view& uri = "127.0.0.1", const size_t port = 5555);
     void run();
-    void do_accept();
     ~Server();
 private:
-    //void set_connection(const InfoClient& client);
-    //void parse_event(const std::string_view& message);
+    void handle_accept(Session* new_session, const boost::system::error_code& error);
 
-    boost::asio::io_service& io_service_;
-    boost::asio::ip::tcp::acceptor& acceptor_;
-    std::map<size_t, std::weak_ptr<Session>> clients_sessions_;
+    boost::asio::io_service io_service_;
+    boost::asio::ip::tcp::socket socket_;
+    boost::asio::ip::tcp::acceptor acceptor_;
+    std::map<size_t, Session*> clients_sessions_;
 };
 
 
 }
 
 
-#endif
+//#endif
