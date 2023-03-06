@@ -1,38 +1,49 @@
 #include "server_common/server_connector.hpp"
+#include <cppkafka/producer.h>
 
 
 namespace {
 
-std::string new_client(nlohmann::json& msg) {
+std::string new_client(nlohmann::json& msg, cppkafka::Producer* const prod_) {
     nlohmann::json data = msg["Message"].get<nlohmann::json>();
-    std::string name = data["name"].get<std::string>();
-    std::string hash_password = data["hash_password"].get<std::string>();
-    auto client = client::InfoClient{client::Client{name, hash_password, 0, true}};
-    server_common::MapClients::inst().add(std::move(client));
-    return std::to_string(client.hash_client);
+    data["balance"] = 0;
+    data["is_valid"] = true;
+    /*std::string name = data["name"].get<std::string>();
+    std::string hash_password = data["hash_password"].get<std::string>();*/
+    auto client = data.get<client::Client>();
+    //auto client = client::InfoClient{client::Client{name, hash_password, 0, true}};
+    int hash = client::hash(&client);
+    prod_->produce(cppkafka::MessageBuilder("UserEvents").key(hash).payload(data.dump()));
+    //server_common::MapClients::inst().add(std::move(client));
+    return "New user: " + std::to_string(hash);
 }
 
-std::string new_order(nlohmann::json& msg) {
+std::string new_order(nlohmann::json& msg, cppkafka::Producer* const prod_) {
     // check valid data on regex
     nlohmann::json data = msg["Message"].get<nlohmann::json>();
-    std::string instrument = "my_exchange:USD/RUB";
-    std::string hash_client = data["hash_client"].get<std::string>();
-    std::string order_type = data["order_type"].get<std::string>();
-    std::string exchange_type = data["exchange_type"].get<std::string>();
-    int64_t timestamp_user = data["timestamp_user"].get<int64_t>();
-    int64_t timestamp_exchange = server_common::Timer::now();
-    double price = data["price"].get<double>();
-    double volume = data["volume"].get<double>();
-    bool is_limit = false;
-    common::Order tmp = common::Order(
+    data["instrument"] = "my_exchange:USD/RUB";
+    //std::string instrument = "my_exchange:USD/RUB";
+    //std::string hash_client = data["hash_client"].get<std::string>();
+    //std::string order_type = data["order_type"].get<std::string>();
+    //std::string exchange_type = data["exchange_type"].get<std::string>();
+    //int64_t timestamp_user = data["timestamp_user"].get<int64_t>();
+    data["timestamp_exchange"] = server_common::Timer::now();
+    //int64_t timestamp_exchange = server_common::Timer::now();
+    //double price = data["price"].get<double>();
+    //double volume = data["volume"].get<double>();
+    data["is_limit"] = false;
+    //bool is_limit = false;
+    /*common::Order tmp = common::Order(
             instrument, hash_client, 
             common::string2OrderType(order_type),
             common::OrderStatus::GOT, 
             common::string2ExchangeType(exchange_type), 
             timestamp_user, timestamp_exchange, volume, price, is_limit
-    );
-    auto order = common::InfoOrder(std::move(tmp));
-    machine::statusMachine::inst().add(order);
+    );*/
+    auto order = data.get<common::Order>();
+    //auto order = common::InfoOrder(std::move(tmp));
+    //machine::statusMachine::inst().add(order);
+    prod_->produce(cppkafka::MessageBuilder("OrderEvents").key(data["hash_client"].get<std::string>()).payload(data.dump()));
     return "New Order";
 }
 
@@ -45,7 +56,7 @@ std::string return_hello() {
 
 namespace server_common {
 
-Session::Session(boost::asio::io_service& io_service) : socket_(io_service) {}
+Session::Session(boost::asio::io_service& io_service, cppkafka::Producer* const prod) : socket_(io_service), prod_(prod) {}
 
 
 void Session::start() {
@@ -95,10 +106,10 @@ std::string Session::parse_event(nlohmann::json data) {
     std::string reply;
     std::string req_type = data["ReqType"].get<std::string>();
     if (req_type == Requests::Registration) {
-        reply = new_client(data);
+        reply = new_client(data, prod_);
         hash_client_ = reply;
     } else if (req_type == Requests::Transaction) {
-        reply = new_order(data);
+        reply = new_order(data, prod_);
     } else if (req_type == Requests::Close) {
         stop();
         reply = "Stop";
@@ -121,7 +132,8 @@ Server::Server(boost::asio::io_service& io_service, const std::string& uri, cons
     acceptor_ = boost::asio::ip::tcp::acceptor(io_service_, endpoint);
     acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
 
-    Session* new_session = new Session(io_service_);
+    Session* new_session = new Session(io_service_, prod_);
+    prod_ = new cppkafka::Producer(conf::config);
     acceptor_.async_accept(new_session->socket(),
         boost::bind(&Server::handle_accept, this, new_session,
         boost::asio::placeholders::error));
@@ -139,7 +151,7 @@ void Server::handle_accept(Session* new_session,
     if (!error)
     {
         new_session->start();
-        new_session = new Session(io_service_);
+        new_session = new Session(io_service_, prod_);
         acceptor_.async_accept(new_session->socket(),
             boost::bind(&Server::handle_accept, this, new_session,
                 boost::asio::placeholders::error));

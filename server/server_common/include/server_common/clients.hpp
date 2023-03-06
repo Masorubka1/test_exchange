@@ -3,7 +3,9 @@
 #pragma once
 
 #include "common/client.hpp"
+#include "common/Common.hpp"
 
+#include <cppkafka/consumer.h>
 #include <map>
 #include <memory>
 
@@ -20,9 +22,14 @@ public:
 	//void remove(const size_t hash_client);
 	static MapClients& inst();
 	//~MapClients();
+	void poll();
 private:
-	MapClients() {};
+	MapClients() {
+		cons_ = new cppkafka::Consumer(conf::config);
+		cons_->subscribe({"UserEvents"});
+	};
 	std::map<int, client::InfoClient> registered_users;
+	cppkafka::Consumer* cons_;
 };
 
 }

@@ -10,12 +10,12 @@ namespace server {
 class Exchange {
 public:
     void run();
-    Exchange() {};
+    Exchange() { instrument_server_.run();};
 
 private:
     std::unique_ptr<server_common::Matcher> matcher_;
     server_common::Timer timer_;
-    server_common::Server instrument_server_; 
+    server_common::NewIOServer instrument_server_; 
 };
 
 }

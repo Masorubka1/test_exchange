@@ -2,6 +2,7 @@
 //#define CLIENT_HPP
 #pragma once
 
+#include <common/json.hpp>
 #include <string>
 #include <memory>
 #include <iostream>
@@ -14,6 +15,7 @@ struct Client {
     int64_t balance = 0;
     bool is_valid = false;
 };
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Client, name, hash_password, balance, is_valid);
 
 inline int hash(const Client* client) {
     int h1 = std::hash<std::string>()(client->name);

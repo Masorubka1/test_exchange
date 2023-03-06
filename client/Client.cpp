@@ -8,6 +8,7 @@
 #include "common/order.hpp"
 #include "server_common/timer.hpp"
 
+
 using boost::asio::ip::tcp;
 
 // Отправка сообщения на сервер по шаблону.

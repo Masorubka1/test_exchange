@@ -6,16 +6,35 @@
 #include <iostream>
 #include <memory>
 #include <cassert>
+#include <common/json.hpp>
 
 namespace common {
 
-enum class OrderType: int8_t {Ask, Bid};
-enum class OrderStatus: int8_t {GOT, WAITING, FINISHED};
-enum class ExchangeType: int8_t {SPOT, SWAP, FUTURE};
+enum class OrderType {Ask, Bid};
+enum class OrderStatus {GOT, WAITING, FINISHED};
+enum class ExchangeType {SPOT, SWAP, FUTURE};
+
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    OrderType, 
+    {
+        {OrderType::Ask, "Ask"},  {OrderType::Bid, "Bid"}
+    })
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    OrderStatus,
+    {
+        {OrderStatus::GOT, "GOT"}, {OrderStatus::WAITING, "WAITING"}, {OrderStatus::FINISHED, "FINISHED"}
+    })
+
+NLOHMANN_JSON_SERIALIZE_ENUM(ExchangeType,
+{
+    {ExchangeType::SPOT, "SPOT"}, {ExchangeType::SWAP, "SWAP"}, {ExchangeType::FUTURE, "FUTURE"}
+});
 
 struct Order {
-    std::string_view instrument;
-    std::string_view hash_client;
+    std::string instrument;
+    std::string hash_client;
     OrderType order_type;
     OrderStatus order_status;
     ExchangeType exchange_type;
@@ -25,7 +44,7 @@ struct Order {
     double price = 0;
     bool is_limit = false;
 
-    explicit Order(std::string instrument_, 
+    /*explicit Order(std::string instrument_, 
     std::string hash_client_,
     OrderType order_type_, 
     OrderStatus order_status_, 
@@ -36,11 +55,13 @@ struct Order {
     double price_,
     bool is_limit_) : instrument(instrument_),  hash_client(hash_client_),
     order_type(order_type_), order_status(order_status_), timestamp_user(timestamp_user_),
-    timestamp_exchange(timestamp_exchange_), volume(volume_), price(price_), is_limit(is_limit_) {}
+    timestamp_exchange(timestamp_exchange_), volume(volume_), price(price_), is_limit(is_limit_) {}*/
 
     friend OrderType string2OrderType(std::string str);
     friend ExchangeType string2ExchangeType(std::string str);
 };
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Order, instrument, hash_client, order_type, order_status, exchange_type, timestamp_user, timestamp_exchange, volume, price, is_limit);
 
 inline OrderType string2OrderType(std::string str) {
     if (str == "Ask") {

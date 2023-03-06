@@ -15,10 +15,9 @@ set(CMAKE_CONFIGURATION_TYPES "Debug" CACHE STRING "" FORCE)
 
 find_package(Boost 1.40 COMPONENTS system REQUIRED)
 find_package(Threads REQUIRED)
+find_package(CppKafka REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
 
-add_subdirectory(depends)
-#find_package(CppKafka REQUIRED)
 
 add_subdirectory(common)
 add_subdirectory(server)

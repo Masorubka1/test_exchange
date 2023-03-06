@@ -11,6 +11,7 @@
 #include "order_status_machine/status_machine.hpp"
 
 
+#include <cppkafka/event.h>
 #include <memory>
 #include <string>
 #include <iostream>
@@ -18,12 +19,13 @@
 #include <boost/asio.hpp>
 #include <chrono>
 #include <thread>
+#include <cppkafka/cppkafka.h>
 
 namespace server_common {
 
 class Session : public common::WebConnector, std::enable_shared_from_this<Session> {
 public:
-    Session(boost::asio::io_service& io_service);
+    Session(boost::asio::io_service& io_service, cppkafka::Producer* const prod);
     
     void start() override;
     void stop() override;
@@ -44,6 +46,8 @@ private:
     enum { max_length = 1024 };
     char data_[max_length];
     std::string hash_client_;
+    cppkafka::MessageBuilder builder_;
+    cppkafka::Producer* const prod_;
 };
 
 class Server {
@@ -55,9 +59,8 @@ private:
     void handle_accept(Session* new_session, const boost::system::error_code& error);
 
     boost::asio::io_service& io_service_;
-    //boost::asio::ip::tcp::socket socket_;
     boost::asio::ip::tcp::acceptor acceptor_;
-    //std::map<std::string, Session*> clients_sessions_;
+    cppkafka::Producer* prod_;
 };
 
 class NewIOServer {

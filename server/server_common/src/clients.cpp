@@ -1,4 +1,5 @@
 #include "server_common/clients.hpp"
+#include <cppkafka/message.h>
 #include <iostream>
 
 namespace server_common {
@@ -25,6 +26,30 @@ void MapClients::remove(const client::InfoClient& client) noexcept {
 	if (this->check(client)) {
 		registered_users.erase(client.hash_client);
 	}	
+}
+
+void MapClients::poll() {
+	cppkafka::Message msg = cons_->poll();
+	if (!msg) {
+        return;
+    }
+	if (msg.get_error()) {
+        // librdkafka provides an error indicating we've reached the
+        // end of a partition every time we do so. Make sure it's not one
+        // of those cases, as it's not really an error
+        if (!msg.is_eof()) {
+            // Handle this somehow...
+        }
+        return;
+    }
+	/*if (msg.get_key() == "Add") {
+		add(msg.get_value());
+	} else if (msg.get_key() == "Remove") {
+		remove(msg.get_value());
+	} else {
+		// ...
+	}*/
+	return;
 }
 
 MapClients& MapClients::inst() {
