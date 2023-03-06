@@ -92,11 +92,11 @@ std::ostream& operator<<(std::ostream &os, const OrderBook& book)
 {
     os << "ASK: \n";
     for (const auto& order: book.ask) {
-        os << order.second << " ";
+        os << order.second.get() << " ";
     }
     os << "\nBID: \n";
     for (const auto& order: book.bid) {
-        os << order.second << " ";
+        os << order.second.get() << " ";
     }
     return os;
 }

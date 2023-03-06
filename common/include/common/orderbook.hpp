@@ -9,6 +9,7 @@
 #include <iostream>
 #include <optional>
 #include <iostream>
+#include <cassert>
 
 namespace common {
 

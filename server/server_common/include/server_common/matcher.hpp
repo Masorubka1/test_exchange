@@ -5,6 +5,7 @@
 #include "common/orderbook.hpp"
 
 #include <memory>
+#include <mutex>
 
 namespace server {
 
