@@ -1,6 +1,6 @@
 #include "server_common/matcher.hpp"
 
-namespace server {
+namespace server_common {
 
 void Matcher::add(common::InfoOrder& order) noexcept {
     orderbook->add(order);

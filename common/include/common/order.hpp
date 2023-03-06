@@ -24,7 +24,8 @@ struct Order {
     double volume = 0;
     double price = 0;
     bool is_limit = false;
-    Order(std::string instrument_, 
+
+    explicit Order(std::string instrument_, 
     std::string hash_client_,
     OrderType order_type_, 
     OrderStatus order_status_, 
@@ -36,9 +37,12 @@ struct Order {
     bool is_limit_) : instrument(instrument_),  hash_client(hash_client_),
     order_type(order_type_), order_status(order_status_), timestamp_user(timestamp_user_),
     timestamp_exchange(timestamp_exchange_), volume(volume_), price(price_), is_limit(is_limit_) {}
+
+    friend OrderType string2OrderType(std::string str);
+    friend ExchangeType string2ExchangeType(std::string str);
 };
 
-OrderType string2OrderType(std::string str) {
+inline OrderType string2OrderType(std::string str) {
     if (str == "Ask") {
         return OrderType::Ask;
     } else if (str == "Bid") {
@@ -48,7 +52,7 @@ OrderType string2OrderType(std::string str) {
     }
 }
 
-ExchangeType string2ExchangeType(std::string str) {
+inline ExchangeType string2ExchangeType(std::string str) {
     if (str == "SPOT") {
         return ExchangeType::SPOT;
     } else if (str == "SWAP") {
@@ -76,10 +80,18 @@ struct InfoOrder {
     double volume = 0;
     double price = 0;
     std::shared_ptr<Order> full_order;
+    
     explicit InfoOrder(Order&& order) : instrument(order.instrument), volume(order.volume), price(order.price), full_order(std::make_shared<Order>(std::move(order))) {}
+
+    friend bool operator<(const InfoOrder& a, const InfoOrder& b);
+    friend std::ostream& operator<<(std::ostream& os, const InfoOrder& order);
 };
 
-std::ostream& operator<<(std::ostream& os, const InfoOrder& order) {
+inline bool operator<(const InfoOrder& a, const InfoOrder& b) {
+        return a.price < b.price;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const InfoOrder& order) {
     os << order.price << ":" << order.volume << " ";
     return os;
 }

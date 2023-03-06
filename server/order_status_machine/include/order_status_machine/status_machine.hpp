@@ -5,19 +5,20 @@
 #include "common/order.hpp"
 
 #include <optional>
-#include <map>
+#include <set>
 
-namespace server {
+namespace machine {
 
-class StatusMachine {
+class statusMachine {
 public:
-	StatusMachine();
 	void add(common::InfoOrder order);
 	void remove(common::InfoOrder order);
 	std::optional<common::InfoOrder> check(common::InfoOrder order);
+	static statusMachine& inst();
 private:
+	statusMachine() {};
 	std::set<common::InfoOrder> all_orders;
-}
+};
 
 }
 

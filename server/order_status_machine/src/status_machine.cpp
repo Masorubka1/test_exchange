@@ -1,27 +1,31 @@
-#include "status_machine.hpp"
+#include "order_status_machine/status_machine.hpp"
 
 #include "common/order.hpp"
 
 #include <optional>
 
-namespace server {
+namespace machine {
 
-StatusMachine::StatusMachine() {}
+//statusMachine::statusMachine() {}
 
-void StatusMachine::add(common::InfoOrder order) {
+void statusMachine::add(common::InfoOrder order) {
 	all_orders.insert(order);
 }
 
-void StatusMachine::remove(common::InfoOrder order) {
+void statusMachine::remove(common::InfoOrder order) {
 	all_orders.erase(order);
 }
 
-std::optional<common::InfoOrder> StatusMachine::check(common::InfoOrder order) {
+std::optional<common::InfoOrder> statusMachine::check(common::InfoOrder order) {
 	if (all_orders.find(order) != all_orders.end()) {
-		return Some(order);
+		return order;
 	}
 	return std::nullopt;
+}
 
+statusMachine& statusMachine::inst() {
+	static statusMachine instance = statusMachine();
+	return instance;
 }
 
 }

@@ -8,12 +8,13 @@
 #include <memory>
 
 
-namespace server {
+namespace server_common {
 
 class MapClients {
 public:
 	void add(const client::InfoClient& client) noexcept;
 	bool check(const client::InfoClient& client) const noexcept;
+	client::InfoClient getClient(const int hash_client) noexcept;
 	//void check(const size_t hash_client);
 	void remove(const client::InfoClient& client) noexcept;
 	//void remove(const size_t hash_client);
@@ -21,7 +22,7 @@ public:
 	//~MapClients();
 private:
 	MapClients() {};
-	std::map<size_t, client::InfoClient> registered_users;
+	std::map<int, client::InfoClient> registered_users;
 };
 
 }

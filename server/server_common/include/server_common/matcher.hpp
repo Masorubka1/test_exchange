@@ -7,7 +7,7 @@
 #include <memory>
 #include <mutex>
 
-namespace server {
+namespace server_common {
 
 class Matcher : public common::OrderBook {
 public:

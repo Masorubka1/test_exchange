@@ -1,0 +1,3 @@
+[submodule "depends/cppkafka"]
+	path = depends/cppkafka
+	url = git@github.com:mfontanini/cppkafka.git

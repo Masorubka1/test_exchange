@@ -1,40 +1,28 @@
 #include "server_common/server_connector.hpp"
 
-/*#include "server_common/clients.hpp"
-#include "server_common/timer.hpp"
-#include "common/order.hpp"
-//#include "common/json.hpp"
-//#include "common/client.hpp"
-#include "common/Common.hpp"
-
-
-#include <string>
-#include <iostream>
-#include <boost/bind/bind.hpp>
-#include <boost/asio.hpp>*/
 
 namespace {
 
-std::string_view new_client(nlohmann::json data) {
-    // check valid data on regex
-    std::string name = data["name"];
-    std::string hash_password = data["has_password"];
+std::string new_client(nlohmann::json& msg) {
+    nlohmann::json data = msg["Message"].get<nlohmann::json>();
+    std::string name = data["name"].get<std::string>();
+    std::string hash_password = data["hash_password"].get<std::string>();
     auto client = client::InfoClient{client::Client{name, hash_password, 0, true}};
-    server::MapClients map_clients = server::MapClients::inst();
-    map_clients.add(std::move(client));
-    return "New Client created";
+    server_common::MapClients::inst().add(std::move(client));
+    return std::to_string(client.hash_client);
 }
 
-std::string_view new_order(nlohmann::json data) {
+std::string new_order(nlohmann::json& msg) {
     // check valid data on regex
+    nlohmann::json data = msg["Message"].get<nlohmann::json>();
     std::string instrument = "my_exchange:USD/RUB";
-    std::string hash_client = data["hash_client"];
-    std::string order_type = data["order_type"];
-    std::string exchange_type = data["exchange_type"];
-    int64_t timestamp_user = data["timestamp_user"];
-    int64_t timestamp_exchange = server::Timer::now();
-    double price = data["price"];
-    double volume = data["volume"];
+    std::string hash_client = data["hash_client"].get<std::string>();
+    std::string order_type = data["order_type"].get<std::string>();
+    std::string exchange_type = data["exchange_type"].get<std::string>();
+    int64_t timestamp_user = data["timestamp_user"].get<int64_t>();
+    int64_t timestamp_exchange = server_common::Timer::now();
+    double price = data["price"].get<double>();
+    double volume = data["volume"].get<double>();
     bool is_limit = false;
     common::Order tmp = common::Order(
             instrument, hash_client, 
@@ -44,26 +32,27 @@ std::string_view new_order(nlohmann::json data) {
             timestamp_user, timestamp_exchange, volume, price, is_limit
     );
     auto order = common::InfoOrder(std::move(tmp));
+    machine::statusMachine::inst().add(order);
     return "New Order";
 }
 
-std::string_view return_hello() {
+std::string return_hello() {
     return "Hello, world!";
-    
 }
 
 }
 
-namespace server {
+
+namespace server_common {
 
 Session::Session(boost::asio::io_service& io_service) : socket_(io_service) {}
 
 
 void Session::start() {
-    boost::asio::async_read(socket_, boost::asio::buffer(data_, max_length),
-                boost::bind(&Session::read_msg, this,
-                    boost::asio::placeholders::error,
-                    boost::asio::placeholders::bytes_transferred));
+    socket_.async_read_some(boost::asio::buffer(data_, max_length),
+            boost::bind(&Session::read_msg, this,
+                boost::asio::placeholders::error,
+                boost::asio::placeholders::bytes_transferred));
 }
 
 void Session::stop() {
@@ -73,7 +62,6 @@ void Session::stop() {
 
 Session::~Session() {
     socket_.close();
-    delete[] &data_;
 }
 
 void Session::read_msg(const boost::system::error_code& error, size_t bytes_transferred) {
@@ -81,7 +69,7 @@ void Session::read_msg(const boost::system::error_code& error, size_t bytes_tran
         data_[bytes_transferred] = '\0';
 
         auto j = nlohmann::json::parse(data_);
-        auto reqType = j["ReqType"];
+        auto reqType = j["ReqType"].get<std::string>();
         std::string_view reply = parse_event(j);
         boost::asio::async_write(socket_,
                 boost::asio::buffer(reply, reply.size()),
@@ -103,11 +91,12 @@ void Session::send_msg(const boost::system::error_code& error) {
     }
 }
 
-std::string_view Session::parse_event(nlohmann::json data) {
-    std::string_view reply;
-    std::string req_type = data["ReqType"];
+std::string Session::parse_event(nlohmann::json data) {
+    std::string reply;
+    std::string req_type = data["ReqType"].get<std::string>();
     if (req_type == Requests::Registration) {
         reply = new_client(data);
+        hash_client_ = reply;
     } else if (req_type == Requests::Transaction) {
         reply = new_order(data);
     } else if (req_type == Requests::Close) {
@@ -125,14 +114,12 @@ boost::asio::ip::tcp::socket& Session::socket() {
 
 
 
-Server::Server(const std::string_view& uri, const size_t port) : acceptor_(io_service_), socket_(io_service_) {
+Server::Server(boost::asio::io_service& io_service, const std::string& uri, const size_t port) : io_service_(io_service), acceptor_(io_service_) {
     std::cout << "Server started! Listen " << port << " port" << std::endl;
 
-    boost::asio::ip::tcp::resolver resolver(io_service_);
-    boost::asio::ip::tcp::endpoint endpoint = *resolver.resolve(uri, std::to_string(port));
+    boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), port);
     acceptor_ = boost::asio::ip::tcp::acceptor(io_service_, endpoint);
     acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
-    socket_ = boost::asio::ip::tcp::socket(io_service_);
 
     Session* new_session = new Session(io_service_);
     acceptor_.async_accept(new_session->socket(),
@@ -141,32 +128,26 @@ Server::Server(const std::string_view& uri, const size_t port) : acceptor_(io_se
 };
 
 Server::~Server() {
-    for (std::map<size_t, Session*>::iterator it = clients_sessions_.begin(); it != clients_sessions_.end(); ++it) {
+    /*for (std::map<std::string, Session*>::iterator it = clients_sessions_.begin(); it != clients_sessions_.end(); ++it) {
         delete it->second;
-    }
-}
-
-void Server::run() {
-    io_service_.run();
+    }*/
 }
 
 void Server::handle_accept(Session* new_session,
         const boost::system::error_code& error)
+{
+    if (!error)
     {
-        if (!error)
-        {
-            new_session->start();
-            new_session = new Session(io_service_);
-            while(new_session->getHashClient() == -1);
-            clients_sessions_[new_session->getHashClient()] = new_session;
-            acceptor_.async_accept(new_session->socket(),
-                boost::bind(&Server::handle_accept, this, new_session,
-                    boost::asio::placeholders::error));
-        }
-        else
-        {
-            delete new_session;
-        }
+        new_session->start();
+        new_session = new Session(io_service_);
+        acceptor_.async_accept(new_session->socket(),
+            boost::bind(&Server::handle_accept, this, new_session,
+                boost::asio::placeholders::error));
     }
+    else
+    {
+        delete new_session;
+    }
+}
 
 }
