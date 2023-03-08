@@ -73,7 +73,7 @@ int main()
         std::string my_id = ProcessRegistration(s);
         std::cout << my_id << "\n";
         int cnt = 0;
-        while (cnt < 3)
+        while (cnt < 4)
         {
             ++cnt;
             // Тут реализовано "бесконечное" меню.
@@ -103,6 +103,7 @@ int main()
                     nlohmann::json data;
                     data["hash_client"] = "1234";
                     data["order_type"] = "Ask";
+                    data["order_status"] = "GOT";
                     data["exchange_type"] = "SPOT";
                     data["timestamp_user"] = server_common::Timer::now();
                     data["price"] = double(10);
@@ -112,6 +113,20 @@ int main()
                     break;
                 }
                 case 3:
+                {
+                    nlohmann::json data;
+                    data["hash_client"] = "1234";
+                    data["order_type"] = "Bid";
+                    data["order_status"] = "GOT";
+                    data["exchange_type"] = "SPOT";
+                    data["timestamp_user"] = server_common::Timer::now();
+                    data["price"] = double(10);
+                    data["volume"] = double(10);
+                    SendMessage(s, my_id, Requests::Transaction, data);
+                    std::cout << ReadMessage(s) << "\n";
+                    break;    
+                }
+                case 4:
                 {
                     exit(0);
                     break;

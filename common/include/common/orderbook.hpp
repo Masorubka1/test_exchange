@@ -37,13 +37,17 @@ struct OrderBookCMP {
 class OrderBookLevel {
 public:
     explicit OrderBookLevel(OrderType t);
-    void add(InfoOrder&& a);
+    void add(InfoOrder& a);
     size_t size() const noexcept;
     void remove(const InfoOrder& a) noexcept;
     int remove(int n) noexcept;
     void clear() noexcept;
     double getPrice() const noexcept;
+    InfoOrder getBest() noexcept;
     friend std::ostream& operator<<(std::ostream& os, const OrderBookLevel& book);
+    ~OrderBookLevel() {
+        level.clear();
+    }
 private:
     OrderType type;
     std::set<InfoOrder, OrderBookCMP> level;
@@ -60,7 +64,7 @@ public:
 protected:
     std::map<double, std::unique_ptr<OrderBookLevel>> ask;  //will use price as key
     std::map<double, std::unique_ptr<OrderBookLevel>> bid;
-    void add_(InfoOrder&& order) noexcept;
+    void add_(InfoOrder order) noexcept;
     void remove_(InfoOrder&& order) noexcept;
 };
 

@@ -25,7 +25,7 @@ namespace server_common {
 
 class Session : public common::WebConnector, std::enable_shared_from_this<Session> {
 public:
-    Session(boost::asio::io_service& io_service, cppkafka::Producer* const prod);
+    Session(boost::asio::io_service& io_service);
     
     void start() override;
     void stop() override;
@@ -43,11 +43,10 @@ public:
     ~Session();
 private:
     boost::asio::ip::tcp::socket socket_;
-    enum { max_length = 1024 };
+    enum { max_length = 2048 };
     char data_[max_length];
     std::string hash_client_;
-    cppkafka::MessageBuilder builder_;
-    cppkafka::Producer* const prod_;
+    //const cppkafka::Producer& prod_;
 };
 
 class Server {
@@ -60,7 +59,7 @@ private:
 
     boost::asio::io_service& io_service_;
     boost::asio::ip::tcp::acceptor acceptor_;
-    cppkafka::Producer* prod_;
+    //static const cppkafka::Producer& prod_(conf::config);
 };
 
 class NewIOServer {

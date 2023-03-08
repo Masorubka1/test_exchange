@@ -8,8 +8,11 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.21)
 project(ClienServerEcn)
 
 set(CMAKE_CXX_STANDARD 17)
-set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+#set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+#set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+set(CMAKE_CXX_CPPLINT "cpplint")
+add_compile_options(-fno-omit-frame-pointer -fsanitize=address)
+add_link_options(-fsanitize=address)
 #set(CMAKE_CONFIGURATION_TYPES "Release" CACHE STRING "" FORCE)
 set(CMAKE_CONFIGURATION_TYPES "Debug" CACHE STRING "" FORCE)
 

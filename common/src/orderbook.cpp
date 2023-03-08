@@ -1,11 +1,13 @@
 #include "common/orderbook.hpp"
+#include <cstddef>
+#include <memory>
 
 
 namespace common {
 
 OrderBookLevel::OrderBookLevel(OrderType t) : type(t) {};
 
-void OrderBookLevel::add(InfoOrder&& order) {
+void OrderBookLevel::add(InfoOrder& order) {
     level.insert(std::move(order));
 }
 
@@ -36,21 +38,36 @@ double OrderBookLevel::getPrice() const noexcept
     return -1;
 }
 
+InfoOrder OrderBookLevel::getBest() noexcept
+{
+    if (level.size() > 0) {
+
+        return static_cast<InfoOrder>(*level.begin());
+    }
+    assert(false);
+    //return reinpreter_cast<InfoOrder>(nullptr); // ha-ha
+}
+
 void OrderBookLevel::clear() noexcept {
     level.clear();
 }
 
-void OrderBook::add_(InfoOrder&& order) noexcept {
+void OrderBook::add_(InfoOrder order) noexcept {
+    auto tmp = std::move(std::make_unique<OrderBookLevel>(OrderType::Bid));
+    
     if (order.full_order->order_type == OrderType::Ask) {
-        if (ask[order.price]->size() == 0) {
-            ask[order.price] = std::make_unique<OrderBookLevel>(OrderBookLevel(OrderType::Ask));
+        if (ask.find(order.price) == ask.end()) {
+            ask[order.price].reset();
+            ask.insert({order.price, std::move(std::make_unique<OrderBookLevel>(OrderType::Ask))});
         }
-        ask[order.price]->add(std::move(order));
+        ask[order.price]->add(order);
     } else {
-        if (bid[order.price]->size() == 0) {
-            bid[order.price] = std::make_unique<OrderBookLevel>(OrderBookLevel(OrderType::Bid));
+        if (bid.find(order.price) == bid.end()) {
+            bid[order.price] = std::move(tmp);
+            bid.insert({order.price, std::move(std::make_unique<OrderBookLevel>(OrderType::Bid))});
+            //bid[order.price] = std::move(std::make_unique<OrderBookLevel>(OrderType::Bid));
         }
-        bid[order.price]->add(std::move(order));
+        bid[order.price]->add(order);
     }
 }
 
@@ -69,7 +86,7 @@ bool OrderBook::is_empty() const {
 }
 
 void OrderBook::add(InfoOrder& order) {
-    this->add_(std::move(order));
+    this->add_(order);
 }
 
 void OrderBook::remove(InfoOrder& order) {
@@ -92,11 +109,11 @@ std::ostream& operator<<(std::ostream &os, const OrderBook& book)
 {
     os << "ASK: \n";
     for (const auto& order: book.ask) {
-        os << order.second.get() << " ";
+        os << *order.second << " ";
     }
     os << "\nBID: \n";
     for (const auto& order: book.bid) {
-        os << order.second.get() << " ";
+        os << *order.second << " ";
     }
     return os;
 }

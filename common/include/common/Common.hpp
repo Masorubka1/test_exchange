@@ -16,8 +16,11 @@ namespace Requests
 }
 
 namespace conf {
-    static cppkafka::Configuration config = {
-        { "metadata.broker.list", "127.0.0.1:9092" }
+    static cppkafka::Configuration config_order = {
+        { "metadata.broker.list", "127.0.0.1:9092" }, {"group.id","order"}, {"topic.metadata.refresh.sparse", true}
+    };
+    static cppkafka::Configuration config_user = {
+        { "metadata.broker.list", "127.0.0.1:9092" }, {"group.id","user"}
     };
 }
 

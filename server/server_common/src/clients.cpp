@@ -29,8 +29,10 @@ void MapClients::remove(const client::InfoClient& client) noexcept {
 }
 
 void MapClients::poll() {
-	cppkafka::Message msg = cons_->poll();
-	if (!msg) {
+    cppkafka::Message msg = cons_.poll();
+    std::cout << "clients1: \n";
+    if (!msg) {
+        std::cout << "clients2: \n";
         return;
     }
 	if (msg.get_error()) {
@@ -42,14 +44,20 @@ void MapClients::poll() {
         }
         return;
     }
-	/*if (msg.get_key() == "Add") {
-		add(msg.get_value());
-	} else if (msg.get_key() == "Remove") {
-		remove(msg.get_value());
-	} else {
+
+    nlohmann::json json_dump = nlohmann::json::parse(msg.get_payload());
+    std::cout << "json_dump_clients: " << json_dump << "\n";
+    client::InfoClient client = client::InfoClient{json_dump.get<client::Client>()};
+
+    if (msg.get_key() == "Add") {
+        add(client);
+    } else if (msg.get_key() == "Remove") {
+        remove(client);
+    } else {
 		// ...
-	}*/
-	return;
+    }
+    std::cout << "size: " << registered_users.size() << "\n";
+    return;
 }
 
 MapClients& MapClients::inst() {
