@@ -3,6 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.21)
 project(ClienServerEcn)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 #set(CMAKE_CXX_CPPLINT "cpplint")
 add_compile_options(-fno-omit-frame-pointer -fsanitize=address)
 add_link_options(-fno-omit-frame-pointer -fsanitize=address)

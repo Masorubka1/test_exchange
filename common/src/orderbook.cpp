@@ -10,7 +10,7 @@ namespace common {
 OrderBookLevel::OrderBookLevel(OrderType t) : type(t) {};
 
 void OrderBookLevel::add(const InfoOrder& order) {
-    level.insert({order.full_order->timestamp_exchange, order});
+    level[order.full_order->timestamp_exchange] = std::move(std::make_shared<InfoOrder>(order));
 }
 
 size_t OrderBookLevel::size() const noexcept {
@@ -21,7 +21,7 @@ void OrderBookLevel::remove(int n) noexcept {
     if (this->size() <= n) {
         level.clear();
     } else {
-        std::map<int64_t, InfoOrder>::iterator it = level.begin();
+        std::map<int64_t, std::shared_ptr<InfoOrder>>::iterator it = level.begin();
         while (n > 0) {
             level.erase(it++);
             --n;
@@ -30,7 +30,7 @@ void OrderBookLevel::remove(int n) noexcept {
 }
 
 void OrderBookLevel::modify(int64_t ts, InfoOrder& order) {
-    level[ts] = order;
+    level[ts] = std::move(std::make_shared<InfoOrder>(order));
 }
 
 void OrderBookLevel::remove(InfoOrder& order) noexcept {
@@ -41,17 +41,20 @@ void OrderBookLevel::remove(const InfoOrder* order) noexcept {
     level.erase(order->full_order->timestamp_exchange);
 }
 
-int OrderBookLevel::getPrice() noexcept {
-    return getBest().price;
+std::optional<int> OrderBookLevel::getPrice() noexcept {
+    auto best_order = getBest();
+    if (best_order != nullptr) {
+        return best_order->price;
+    }
+    return std::nullopt;
 }
 
-InfoOrder OrderBookLevel::getBest() noexcept {
+InfoOrder* OrderBookLevel::getBest() noexcept {
     if (level.begin() != level.end()) {
-        return level.begin()->second;
+        return level.begin()->second.get();
     }
-    //std::cout << "size: " << level.size();
-    return InfoOrder();
     //assert(false);
+    return nullptr;
     //return reinpreter_cast<InfoOrder>(nullptr); // ha-ha
 }
 
@@ -126,10 +129,10 @@ void OrderBook::remove(InfoOrder& order) {
     this->remove_(order);
 }
 
-int OrderBook::getPrice()
+std::optional<int> OrderBook::getPrice()
 {
     if (ask.begin() == ask.end() && bid.begin() == bid.end()) {
-        return -1;
+        return std::nullopt;
     } else if (ask.begin() == ask.end()) {
         auto bid_order_level = bid.begin()->second;
         return bid_order_level.getPrice();
@@ -139,7 +142,7 @@ int OrderBook::getPrice()
     } else {
         auto ask_order_level = ask.begin()->second;
         auto bid_order_level = bid.begin()->second;
-        return (ask_order_level.getPrice() + bid_order_level.getPrice()) / 2;
+        return (ask_order_level.getPrice().value() + bid_order_level.getPrice().value()) / 2;
     }
 }
 
@@ -164,7 +167,7 @@ std::optional<OrderBookLevel> OrderBook::getLevel(OrderType t) {
 
 std::ostream& operator<<(std::ostream& os, const OrderBookLevel& xz) {
     for (const auto& [_, order]: xz.level) {
-        os << order << " ";
+        os << *(order) << " ";
     }
     return os;
 }

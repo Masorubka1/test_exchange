@@ -46,15 +46,15 @@ public:
     void remove(int n) noexcept;
     void modify(int64_t ts, InfoOrder& order);
     void clear() noexcept;
-    int getPrice() noexcept;
-    InfoOrder getBest() noexcept;
+    std::optional<int> getPrice() noexcept;
+    InfoOrder* getBest() noexcept;
     friend std::ostream& operator<<(std::ostream& os, const OrderBookLevel& book);
     ~OrderBookLevel() {
         level.clear();
     }
 private:
     OrderType type;
-    std::map<int64_t, InfoOrder> level;
+    std::map<int64_t, std::shared_ptr<InfoOrder>> level;
 };
 
 class OrderBook {
@@ -62,7 +62,7 @@ public:
     bool is_empty() const;
     void add(InfoOrder& order);
     void remove(InfoOrder& order);
-    int getPrice();
+    std::optional<int> getPrice();
     friend std::ostream& operator<<(std::ostream& os, const OrderBook& book);
     OrderBook() = default;
 protected:

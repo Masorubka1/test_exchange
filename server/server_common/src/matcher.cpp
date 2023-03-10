@@ -24,33 +24,32 @@ void Matcher::resolve_orders() {
     }
     std::cout << "\n";*/
     while ((ask_level.has_value() && bid_level.has_value()) && (ask_level->getPrice() <= bid_level->getPrice())) {
-        common::InfoOrder best_ask_order = ask_level->getBest();
-        common::InfoOrder best_bid_order = bid_level->getBest(); 
-        if (best_ask_order.volume < best_bid_order.volume) {
-            best_bid_order.volume -= best_ask_order.volume;
-            ask[best_bid_order.price].modify(best_bid_order.full_order->timestamp_exchange, best_bid_order);
-            nlohmann::json data_ask = *(best_ask_order.full_order.get());
+        common::InfoOrder* best_ask_order = ask_level->getBest();
+        common::InfoOrder* best_bid_order = bid_level->getBest();
+        if (best_ask_order == nullptr || best_bid_order == nullptr) {
+            assert(false);
+        }
+        if (best_ask_order->volume < best_bid_order->volume) {
+            best_bid_order->volume -= best_ask_order->volume;
+            nlohmann::json data_ask = *(best_ask_order->full_order.get());
             std::string ask = data_ask.dump();
             producer.produce(cppkafka::MessageBuilder("OrderEvents").partition(1).key("Finished").payload(ask));
-            remove(best_ask_order);
-        } else if (best_ask_order.volume > best_bid_order.volume) {
-            best_ask_order.volume -= best_bid_order.volume;
-            ask[best_ask_order.price].modify(best_ask_order.full_order->timestamp_exchange, best_ask_order);
-            nlohmann::json data_bid = *(best_ask_order.full_order.get());
+            remove(*best_ask_order);
+        } else if (best_ask_order->volume > best_bid_order->volume) {
+            best_ask_order->volume -= best_bid_order->volume;
+            nlohmann::json data_bid = *(best_ask_order->full_order.get());
             std::string bid = data_bid.dump();
             producer.produce(cppkafka::MessageBuilder("OrderEvents").partition(1).key("Finished").payload(bid));
-            remove(best_bid_order);
+            remove(*best_bid_order);
         } else {
-            nlohmann::json data_ask = *(best_ask_order.full_order.get());
-            //data_ask["order_status"] = common::OrderStatus::FINISHED;
+            nlohmann::json data_ask = *(best_ask_order->full_order.get());
             std::string ask = data_ask.dump();
             producer.produce(cppkafka::MessageBuilder("OrderEvents").partition(1).key("Finished").payload(ask));
-            nlohmann::json data_bid = *(best_ask_order.full_order.get());
-            //data_bid["order_status"] = common::OrderStatus::FINISHED;
+            nlohmann::json data_bid = *(best_ask_order->full_order.get());
             std::string bid = data_bid.dump();
             producer.produce(cppkafka::MessageBuilder("OrderEvents").partition(1).key("Finished").payload(bid));
-            remove(best_ask_order);
-            remove(best_bid_order);
+            remove(*best_ask_order);
+            remove(*best_bid_order);
         }
 
         ask_level = getLevel(common::OrderType::Ask);
@@ -97,9 +96,6 @@ void Matcher::poll() {
 		// ...
     }
     resolve_orders();
-    //std::cout << ask << "\n";
-    //std::cout << "size: " << registered_users.size() << "\n";
-    //return;
 }
 
 }
