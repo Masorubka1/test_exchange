@@ -71,11 +71,8 @@ int main()
         // Тут мы "регистрируем" пользователя - отправляем на сервер имя, а сервер возвращает нам ID.
         // Этот ID далее используется при отправке запросов.
         std::string my_id = ProcessRegistration(s);
-        std::cout << my_id << "\n";
-        //int cnt = 0;
         while (true)
         {
-            //++cnt;
             // Тут реализовано "бесконечное" меню.
             std::cout << "Menu:\n"
                          "1) Hello Request\n"
