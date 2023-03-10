@@ -11,6 +11,7 @@
 #include <optional>
 #include <iostream>
 #include <cassert>
+#include <vector>
 
 namespace common {
 
@@ -40,6 +41,7 @@ public:
     void add(const InfoOrder& a);
     size_t size() const noexcept;
     void remove(InfoOrder& a) noexcept;
+    void remove(const InfoOrder* order) noexcept;
     void remove(int n) noexcept;
     void clear() noexcept;
     int getPrice() noexcept;
@@ -50,7 +52,7 @@ public:
     }
 private:
     OrderType type;
-    std::set<std::shared_ptr<InfoOrder>, OrderBookCMP> level;
+    std::map<int64_t, std::unique_ptr<InfoOrder>> level;
 };
 
 class OrderBook {

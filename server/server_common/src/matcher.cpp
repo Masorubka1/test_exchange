@@ -37,22 +37,29 @@ void Matcher::resolve_orders() {
         common::InfoOrder* best_ask_order = ask_iter->getBest();
         common::InfoOrder* best_bid_order = bid_iter->getBest(); 
         if (best_ask_order->volume < best_bid_order->volume) {
-            //std::cout << "\n1\n";
+            std::cout << "\n1\n";
             best_bid_order->volume -= best_ask_order->volume;
+            std::cout << "\n2\n";
             nlohmann::json data_ask = best_ask_order->full_order;
             std::string ask = data_ask.dump();
             //producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(ask));
             //ask_iter->second->remove(*(best_ask_order.get()));
+            std::cout << "\n3\n";
             remove(*best_ask_order);
+            std::cout << "\n4\n";
         } else if (best_ask_order->volume > best_bid_order->volume) {
             //std::cout << "\n2\n";
+            std::cout << "\n5\n";
             best_ask_order->volume -= best_bid_order->volume;
+            std::cout << "\n6\n";
             nlohmann::json data_bid = best_ask_order->full_order;
             //data_bid["order_status"] = common::OrderStatus::FINISHED;
             std::string bid = data_bid.dump();
             //producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(bid));
             //bid_iter->second->remove(*(best_bid_order.get()));
+            std::cout << "\n7\n";
             remove(*best_bid_order);
+            std::cout << "\n8\n";
             //this->remove(best_bid_order);
         } else {
             //std::cout << "\n3\n";
@@ -66,8 +73,11 @@ void Matcher::resolve_orders() {
             //producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(bid));
             //ask_iter->second->remove(*(best_ask_order.get()));
             //bid_iter->second->remove(*(best_bid_order.get()));
+            std::cout << "\n9\n";
             remove(*best_ask_order);
+            std::cout << "\n10\n";
             remove(*best_bid_order);
+            std::cout << "\n11\n";
         }
 
         if (ask_iter == nullptr) {

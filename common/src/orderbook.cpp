@@ -10,7 +10,7 @@ namespace common {
 OrderBookLevel::OrderBookLevel(OrderType t) : type(t) {};
 
 void OrderBookLevel::add(const InfoOrder& order) {
-    level.insert(std::make_shared<InfoOrder>(order));
+    level[order.full_order.timestamp_exchange] = std::move(std::make_unique<InfoOrder>(order));
 }
 
 size_t OrderBookLevel::size() const noexcept {
@@ -21,7 +21,7 @@ void OrderBookLevel::remove(int n) noexcept {
     if (this->size() <= n) {
         level.clear();
     } else {
-        std::set<std::shared_ptr<InfoOrder>, OrderBookCMP>::iterator it = level.begin();
+        std::map<int64_t, std::unique_ptr<InfoOrder>>::iterator it = level.begin();
         while (n > 0) {
             level.erase(it++);
             --n;
@@ -31,7 +31,7 @@ void OrderBookLevel::remove(int n) noexcept {
 
 void OrderBookLevel::remove(InfoOrder& order) noexcept {
     //std::cout << "\nsize :" << level.size() << "\n";
-    for (auto it = level.begin(), end = level.end(); it != end; ++it) {
+    /*for (auto it = level.begin(), end = level.end(); it != end; ++it) {
         std::cout << "level: " << *(it->get()) << " rm: " << order;
         std::cout << "\nsize_before: " << level.size();
         if (*(it->get()) == order) {
@@ -42,9 +42,14 @@ void OrderBookLevel::remove(InfoOrder& order) noexcept {
         }
         std::cout << "\nsize_after: " << level.size();
         std::cout << "\nprice: " << (order.price == it->get()->price) << " vol: " << (order.volume == it->get()->volume) << " inst: " << (order.instrument == it->get()->instrument) << "\n";
-    }
+    }*/
+    level.erase(order.full_order.timestamp_exchange);
     //level.erase(std::make_shared<InfoOrder>(order));
     //std::cout << "\nsize :" << level.size() << "\n";
+}
+
+void OrderBookLevel::remove(const InfoOrder* order) noexcept {
+    level.erase(order->full_order.timestamp_exchange);
 }
 
 int OrderBookLevel::getPrice() noexcept {
@@ -53,7 +58,7 @@ int OrderBookLevel::getPrice() noexcept {
 
 InfoOrder* OrderBookLevel::getBest() noexcept {
     if (level.begin() != level.end()) {
-        return level.begin()->get();
+        return level.begin()->second.get();
     }
     assert(false);
     //return reinpreter_cast<InfoOrder>(nullptr); // ha-ha
@@ -104,7 +109,6 @@ void OrderBook::remove_(InfoOrder& order) noexcept {
         if (ask.find(order.price) != ask.end()) {
             ask[order.price]->remove(order);
             if (ask[order.price]->size() == 0) {
-                //ask[order.price].reset();
                 ask.erase(order.price);
             }
         } else {
@@ -183,7 +187,7 @@ OrderBookLevel* OrderBook::getLevel(OrderType t) {
 
 std::ostream& operator<<(std::ostream& os, const OrderBookLevel& xz) {
     for (const auto& order: xz.level) {
-        os << *(order.get()) << " ";
+        os << *(order.second.get()) << " ";
     }
     return os;
 }
