@@ -18,84 +18,82 @@ void Matcher::remove(common::InfoOrder& order) noexcept {
 void Matcher::resolve_orders() {
     //static cppkafka::Producer producer(conf::config_order);
     std::scoped_lock lock(m_mutex);
-    auto ask_iter = getLevel(common::OrderType::Ask);
-    auto bid_iter = getLevel(common::OrderType::Bid);
+    auto ask_level = getLevel(common::OrderType::Ask);
+    auto bid_level = getLevel(common::OrderType::Bid);
 
-    if (ask_iter == nullptr || bid_iter == nullptr) {
+    if (!ask_level.has_value() || !bid_level.has_value()) {
         return;
     }
     std::cout << "\nHere_ask: ";
     for (auto& [k, v] : ask) {
-        std::cout << *v << " ";
+        std::cout << v << " ";
     }
     std::cout << "\nHere_bid: ";
     for (auto& [k, v] : bid) {
-        std::cout << *v << " ";
+        std::cout << v << " ";
     }
     std::cout << "\n";
-    while (ask_iter != nullptr && bid_iter != nullptr && (ask_iter->getPrice() <= bid_iter->getPrice())) {
-        common::InfoOrder* best_ask_order = ask_iter->getBest();
-        common::InfoOrder* best_bid_order = bid_iter->getBest(); 
-        if (best_ask_order->volume < best_bid_order->volume) {
-            std::cout << "\n1\n";
-            best_bid_order->volume -= best_ask_order->volume;
-            std::cout << "\n2\n";
-            nlohmann::json data_ask = best_ask_order->full_order;
+    while ((ask_level.has_value() && bid_level.has_value()) && (ask_level->getPrice() <= bid_level->getPrice())) {
+        //std::cout << "Here:\n";
+        common::InfoOrder best_ask_order = ask_level->getBest();
+        common::InfoOrder best_bid_order = bid_level->getBest(); 
+        if (best_ask_order.volume < best_bid_order.volume) {
+            //std::cout << "\n1\n";
+            best_bid_order.volume -= best_ask_order.volume;
+            ask[best_bid_order.price].modify(best_bid_order.full_order.timestamp_exchange, best_bid_order);
+            //std::cout << "\n2\n";
+            nlohmann::json data_ask = best_ask_order.full_order;
             std::string ask = data_ask.dump();
             //producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(ask));
-            //ask_iter->second->remove(*(best_ask_order.get()));
-            std::cout << "\n3\n";
-            remove(*best_ask_order);
-            std::cout << "\n4\n";
-        } else if (best_ask_order->volume > best_bid_order->volume) {
+            //ask_level->second->remove(*(best_ask_order.get()));
+            //std::cout << "\n3\n";
+            remove(best_ask_order);
+            //std::cout << "\n4\n";
+        } else if (best_ask_order.volume > best_bid_order.volume) {
             //std::cout << "\n2\n";
-            std::cout << "\n5\n";
-            best_ask_order->volume -= best_bid_order->volume;
-            std::cout << "\n6\n";
-            nlohmann::json data_bid = best_ask_order->full_order;
+            //std::cout << "\n5\n";
+            best_ask_order.volume -= best_bid_order.volume;
+            ask[best_ask_order.price].modify(best_ask_order.full_order.timestamp_exchange, best_ask_order);
+            //std::cout << "\n6\n";
+            nlohmann::json data_bid = best_ask_order.full_order;
             //data_bid["order_status"] = common::OrderStatus::FINISHED;
             std::string bid = data_bid.dump();
             //producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(bid));
-            //bid_iter->second->remove(*(best_bid_order.get()));
-            std::cout << "\n7\n";
-            remove(*best_bid_order);
-            std::cout << "\n8\n";
+            //bid_level->second->remove(*(best_bid_order.get()));
+            //std::cout << "\n7\n";
+            remove(best_bid_order);
+            //std::cout << "\n8\n";
             //this->remove(best_bid_order);
         } else {
             //std::cout << "\n3\n";
-            nlohmann::json data_ask = best_ask_order->full_order;
+            nlohmann::json data_ask = best_ask_order.full_order;
             //data_ask["order_status"] = common::OrderStatus::FINISHED;
             std::string ask = data_ask.dump();
             //producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(ask));
-            nlohmann::json data_bid = best_ask_order->full_order;
+            nlohmann::json data_bid = best_ask_order.full_order;
             //data_bid["order_status"] = common::OrderStatus::FINISHED;
             std::string bid = data_bid.dump();
             //producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(bid));
-            //ask_iter->second->remove(*(best_ask_order.get()));
-            //bid_iter->second->remove(*(best_bid_order.get()));
-            std::cout << "\n9\n";
-            remove(*best_ask_order);
-            std::cout << "\n10\n";
-            remove(*best_bid_order);
-            std::cout << "\n11\n";
+            //ask_level->second->remove(*(best_ask_order.get()));
+            //bid_level->second->remove(*(best_bid_order.get()));
+            //std::cout << "\n9\n";
+            remove(best_ask_order);
+            //std::cout << "\n10\n";
+            remove(best_bid_order);
+            //std::cout << "\n11\n";
         }
 
-        if (ask_iter == nullptr) {
-            //std::cout << "\n5\n";
-            ask_iter = getLevel(common::OrderType::Ask);
-        }
-        if (bid_iter == nullptr) {
-            //std::cout << "\n6\n";
-            bid_iter = getLevel(common::OrderType::Bid);
-        }
+        ask_level = getLevel(common::OrderType::Ask);
+        bid_level = getLevel(common::OrderType::Bid);
+        //std::cout << "Here2:\n";
     }
     std::cout << "\nHere_ask: ";
     for (auto& [k, v] : ask) {
-        std::cout << *v << " ";
+        std::cout << v << " ";
     }
     std::cout << "\nHere_bid: ";
     for (auto& [k, v] : bid) {
-        std::cout << *v << " ";
+        std::cout << v << " ";
     }
     std::cout << "\n";
 }

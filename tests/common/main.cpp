@@ -101,9 +101,9 @@ TEST(orderbooklevel, get_best) {
     common::OrderBookLevel level(common::OrderType::Ask);
     level.add(order);
     auto return_order = level.getBest();
-    ASSERT_EQ(return_order->price, order.price);
-    ASSERT_EQ(return_order->volume, order.volume);
-    ASSERT_EQ(return_order->full_order, order.full_order);
+    ASSERT_EQ(return_order.price, order.price);
+    ASSERT_EQ(return_order.volume, order.volume);
+    ASSERT_EQ(return_order.full_order, order.full_order);
 }
 
 TEST(orderbook, add) {

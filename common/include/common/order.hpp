@@ -85,7 +85,7 @@ struct InfoOrder {
     Order full_order;
     
     explicit InfoOrder(Order&& order) : instrument(order.instrument), volume(order.volume), price(order.price), full_order(order) {}
-
+    InfoOrder() = default;
     friend bool operator<(const InfoOrder& a, const InfoOrder& b);
     friend std::ostream& operator<<(std::ostream& os, const InfoOrder& order);
     

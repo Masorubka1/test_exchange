@@ -10,7 +10,7 @@ namespace common {
 OrderBookLevel::OrderBookLevel(OrderType t) : type(t) {};
 
 void OrderBookLevel::add(const InfoOrder& order) {
-    level[order.full_order.timestamp_exchange] = std::move(std::make_unique<InfoOrder>(order));
+    level.insert({order.full_order.timestamp_exchange, order});
 }
 
 size_t OrderBookLevel::size() const noexcept {
@@ -21,12 +21,16 @@ void OrderBookLevel::remove(int n) noexcept {
     if (this->size() <= n) {
         level.clear();
     } else {
-        std::map<int64_t, std::unique_ptr<InfoOrder>>::iterator it = level.begin();
+        std::map<int64_t, InfoOrder>::iterator it = level.begin();
         while (n > 0) {
             level.erase(it++);
             --n;
         }
     }
+}
+
+void OrderBookLevel::modify(int64_t ts, InfoOrder& order) {
+    level[ts] = order;
 }
 
 void OrderBookLevel::remove(InfoOrder& order) noexcept {
@@ -38,14 +42,16 @@ void OrderBookLevel::remove(const InfoOrder* order) noexcept {
 }
 
 int OrderBookLevel::getPrice() noexcept {
-    return this->getBest()->price;
+    return getBest().price;
 }
 
-InfoOrder* OrderBookLevel::getBest() noexcept {
+InfoOrder OrderBookLevel::getBest() noexcept {
     if (level.begin() != level.end()) {
-        return level.begin()->second.get();
+        return level.begin()->second;
     }
-    assert(false);
+    //std::cout << "size: " << level.size();
+    return InfoOrder();
+    //assert(false);
     //return reinpreter_cast<InfoOrder>(nullptr); // ha-ha
 }
 
@@ -56,14 +62,17 @@ void OrderBookLevel::clear() noexcept {
 void OrderBook::add_(InfoOrder& order) noexcept {
     if (order.full_order.order_type == OrderType::Ask) {
         if (ask.find(order.price) == ask.end()) {
-            ask[order.price] = std::move(std::make_unique<OrderBookLevel>(OrderType::Ask));
+            //ask[order.price] = std::move(std::make_unique<OrderBookLevel>(OrderType::Ask));
+            ask.insert({order.price, OrderBookLevel(OrderType::Ask)});
         }
-        ask[order.price]->add(order);
+        ask[order.price].add(order);
     } else {
         if (bid.find(order.price) == bid.end()) {
-            bid[order.price] = std::move(std::make_unique<OrderBookLevel>(OrderType::Bid));
+            //bid[order.price] = std::move(std::make_unique<OrderBookLevel>(OrderType::Bid));
+            //bid[order.price] = OrderBookLevel(OrderType::Bid);
+            bid.insert({order.price, OrderBookLevel(OrderType::Bid)});
         }
-        bid[order.price]->add(order);
+        bid[order.price].add(order);
     }
 }
 
@@ -79,8 +88,8 @@ void OrderBook::remove_(InfoOrder& order) noexcept {
     std::cout << "\n";*/
     if (order.full_order.order_type == OrderType::Ask) {
         if (ask.find(order.price) != ask.end()) {
-            ask[order.price]->remove(order);
-            if (ask[order.price]->size() == 0) {
+            ask[order.price].remove(order);
+            if (ask[order.price].size() == 0) {
                 ask.erase(order.price);
             }
         } else {
@@ -88,8 +97,8 @@ void OrderBook::remove_(InfoOrder& order) noexcept {
         }
     } else {
         if (bid.find(order.price) != bid.end()) {
-            bid[order.price]->remove(order);
-            if (bid[order.price]->size() == 0) {
+            bid[order.price].remove(order);
+            if (bid[order.price].size() == 0) {
                 bid.erase(order.price);
             }
         } else {
@@ -101,10 +110,10 @@ void OrderBook::remove_(InfoOrder& order) noexcept {
 bool OrderBook::is_empty() const {
     int cnt = 0;
     for (auto& [k, v] : ask) {
-        cnt += v->size();
+        cnt += v.size();
     }
     for (auto& [k, v] : bid) {
-        cnt += v->size();
+        cnt += v.size();
     }
     return (cnt == 0);
 }
@@ -122,31 +131,31 @@ int OrderBook::getPrice()
     if (ask.begin() == ask.end() && bid.begin() == bid.end()) {
         return -1;
     } else if (ask.begin() == ask.end()) {
-        auto bid_order_level = bid.begin()->second.get();
-        return bid_order_level->getPrice();
+        auto bid_order_level = bid.begin()->second;
+        return bid_order_level.getPrice();
     } else if (bid.begin() == bid.end()) {
-        auto ask_order_level = ask.begin()->second.get();
-        return ask_order_level->getPrice();
+        auto ask_order_level = ask.begin()->second;
+        return ask_order_level.getPrice();
     } else {
-        auto ask_order_level = ask.begin()->second.get();
-        auto bid_order_level = bid.begin()->second.get();
-        return (ask_order_level->getPrice() + bid_order_level->getPrice()) / 2;
+        auto ask_order_level = ask.begin()->second;
+        auto bid_order_level = bid.begin()->second;
+        return (ask_order_level.getPrice() + bid_order_level.getPrice()) / 2;
     }
 }
 
-OrderBookLevel* OrderBook::getLevel(OrderType t) {
+std::optional<OrderBookLevel> OrderBook::getLevel(OrderType t) {
     switch (t) {
         case common::OrderType::Ask:
-            if (ask.begin() != ask.end()) {
-                return ask.begin()->second.get();
+            if (ask.begin() != ask.end() && ask.begin()->second.size() > 0) {
+                return ask.begin()->second;
             } else {
-                return nullptr;
+                return std::nullopt;
             }
         case common::OrderType::Bid:
-            if (ask.begin() != ask.end()) {
-                return bid.begin()->second.get();
+            if (ask.begin() != ask.end() && bid.begin()->second.size() > 0) {
+                return bid.begin()->second;
             } else {
-                return nullptr;
+                return std::nullopt;
             }
         default:
             assert(false);
@@ -154,8 +163,8 @@ OrderBookLevel* OrderBook::getLevel(OrderType t) {
 }
 
 std::ostream& operator<<(std::ostream& os, const OrderBookLevel& xz) {
-    for (const auto& order: xz.level) {
-        os << *(order.second.get()) << " ";
+    for (const auto& [_, order]: xz.level) {
+        os << order << " ";
     }
     return os;
 }
@@ -164,11 +173,11 @@ std::ostream& operator<<(std::ostream &os, const OrderBook& book)
 {
     os << "ASK: \n";
     for (const auto& order: book.ask) {
-        os << *order.second << " ";
+        os << order.second << " ";
     }
     os << "\nBID: \n";
     for (const auto& order: book.bid) {
-        os << *order.second << " ";
+        os << order.second << " ";
     }
     return os;
 }
