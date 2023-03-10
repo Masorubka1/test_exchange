@@ -59,7 +59,6 @@ private:
 
     boost::asio::io_service& io_service_;
     boost::asio::ip::tcp::acceptor acceptor_;
-    //static const cppkafka::Producer& prod_(conf::config);
 };
 
 class NewIOServer {

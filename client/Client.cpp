@@ -72,19 +72,20 @@ int main()
         // Этот ID далее используется при отправке запросов.
         std::string my_id = ProcessRegistration(s);
         std::cout << my_id << "\n";
-        int cnt = 0;
-        while (cnt < 4)
+        //int cnt = 0;
+        while (true)
         {
-            ++cnt;
+            //++cnt;
             // Тут реализовано "бесконечное" меню.
             std::cout << "Menu:\n"
                          "1) Hello Request\n"
-                         "2) Order request\n"
-                         "3) Exit\n"
+                         "2) Order request Ask\n"
+                         "3) Order request Bid\n"
+                         "4) Exit\n"
                          << std::endl;
 
-            short menu_option_num = cnt;
-            //std::cin >> menu_option_num;
+            short menu_option_num = 0;
+            std::cin >> menu_option_num;
             switch (menu_option_num)
             {
                 case 1:

@@ -21,8 +21,6 @@ public:
 	void poll();
 private:
 	statusMachine() : cons_(conf::config_order) {
-		//cons_ = new cppkafka::Consumer();
-		//cons_.subscribe({"OrderEvents"});
 		cons_.assign({cppkafka::TopicPartition{"OrderEvents", 1}});
 	};
 	std::set<common::InfoOrder> all_orders;

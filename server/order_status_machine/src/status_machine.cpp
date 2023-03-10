@@ -53,7 +53,6 @@ void statusMachine::poll() {
     } else {
 		// ...
     }
-    //resolve_orders();
 }
 
 statusMachine& statusMachine::inst() {

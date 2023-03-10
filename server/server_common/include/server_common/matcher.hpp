@@ -16,12 +16,9 @@ class Matcher : public common::OrderBook {
 public:
     void poll();
     Matcher() : cons_(conf::config_order) {
-        //cons_.subscribe({"OrderEvents"});
         cons_.assign({cppkafka::TopicPartition{"OrderEvents", 0}});
     }
     void resolve_orders();
-    //void add(common::InfoOrder& order) noexcept override;
-    //void remove(common::InfoOrder& order) noexcept override;
 private:
     std::mutex m_mutex;
     cppkafka::Consumer cons_;
