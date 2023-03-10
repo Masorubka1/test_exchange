@@ -30,22 +30,7 @@ void OrderBookLevel::remove(int n) noexcept {
 }
 
 void OrderBookLevel::remove(InfoOrder& order) noexcept {
-    //std::cout << "\nsize :" << level.size() << "\n";
-    /*for (auto it = level.begin(), end = level.end(); it != end; ++it) {
-        std::cout << "level: " << *(it->get()) << " rm: " << order;
-        std::cout << "\nsize_before: " << level.size();
-        if (*(it->get()) == order) {
-            std::cout << "WTF\n";
-            //std::cout << it->get()->full_order;
-            level.erase(it);
-            break;
-        }
-        std::cout << "\nsize_after: " << level.size();
-        std::cout << "\nprice: " << (order.price == it->get()->price) << " vol: " << (order.volume == it->get()->volume) << " inst: " << (order.instrument == it->get()->instrument) << "\n";
-    }*/
     level.erase(order.full_order.timestamp_exchange);
-    //level.erase(std::make_shared<InfoOrder>(order));
-    //std::cout << "\nsize :" << level.size() << "\n";
 }
 
 void OrderBookLevel::remove(const InfoOrder* order) noexcept {
@@ -69,30 +54,17 @@ void OrderBookLevel::clear() noexcept {
 }
 
 void OrderBook::add_(InfoOrder& order) noexcept {
-    //std::cout << "\ntype_ask: " << (order.full_order->order_type == OrderType::Ask) << "\n";
-    //std::cout << "\ntype_bid: " << (order.full_order->order_type == OrderType::Bid) << "\n";
     if (order.full_order.order_type == OrderType::Ask) {
         if (ask.find(order.price) == ask.end()) {
             ask[order.price] = std::move(std::make_unique<OrderBookLevel>(OrderType::Ask));
         }
         ask[order.price]->add(order);
-        //std::cout << "\nask_size: " << ask[order.price]->size() << "\n";
     } else {
         if (bid.find(order.price) == bid.end()) {
             bid[order.price] = std::move(std::make_unique<OrderBookLevel>(OrderType::Bid));
         }
         bid[order.price]->add(order);
-        //std::cout << "\nbid_size: " << bid[order.price]->size() << "\n";
     }
-    /*std::cout << "\nadd_Here_ask: ";
-    for (auto& [k, v] : ask) {
-        std::cout << k << " ";
-    }
-    std::cout << "\nadd_Here_bid: ";
-    for (auto& [k, v] : bid) {
-        std::cout << k << " ";
-    }
-    std::cout << "\n";*/
 }
 
 void OrderBook::remove_(InfoOrder& order) noexcept {
@@ -148,18 +120,14 @@ void OrderBook::remove(InfoOrder& order) {
 int OrderBook::getPrice()
 {
     if (ask.begin() == ask.end() && bid.begin() == bid.end()) {
-        //std::cout << "\n1\n";
         return -1;
     } else if (ask.begin() == ask.end()) {
-        //std::cout << "\n2\n";
         auto bid_order_level = bid.begin()->second.get();
         return bid_order_level->getPrice();
     } else if (bid.begin() == bid.end()) {
-        //std::cout << "\n3\n";
         auto ask_order_level = ask.begin()->second.get();
         return ask_order_level->getPrice();
     } else {
-        //std::cout << "\n4\n";
         auto ask_order_level = ask.begin()->second.get();
         auto bid_order_level = bid.begin()->second.get();
         return (ask_order_level->getPrice() + bid_order_level->getPrice()) / 2;

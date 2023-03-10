@@ -21,7 +21,7 @@ public:
 	void remove(const client::InfoClient& client) noexcept;
 	//void remove(const size_t hash_client);
 	static MapClients& inst();
-	//~MapClients();
+	~MapClients() {};
 	void poll();
 private:
 	/*MapClients() : cons_(conf::config_user) {
