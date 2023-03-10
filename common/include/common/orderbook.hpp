@@ -15,7 +15,7 @@
 
 namespace common {
 
-struct OrderBookCMP {
+/*struct OrderBookCMP {
     bool operator()(const std::shared_ptr<common::InfoOrder> a, const std::shared_ptr<common::InfoOrder> b) const
     {
         switch (a->full_order.order_type) {
@@ -29,7 +29,7 @@ struct OrderBookCMP {
                 assert(false);
         }
     }
-};
+};*/
 
 //}
 

@@ -24,7 +24,7 @@ void Matcher::resolve_orders() {
     if (!ask_level.has_value() || !bid_level.has_value()) {
         return;
     }
-    std::cout << "\nHere_ask: ";
+    /*std::cout << "\nHere_ask: ";
     for (auto& [k, v] : ask) {
         std::cout << v << " ";
     }
@@ -32,62 +32,42 @@ void Matcher::resolve_orders() {
     for (auto& [k, v] : bid) {
         std::cout << v << " ";
     }
-    std::cout << "\n";
+    std::cout << "\n";*/
     while ((ask_level.has_value() && bid_level.has_value()) && (ask_level->getPrice() <= bid_level->getPrice())) {
-        //std::cout << "Here:\n";
         common::InfoOrder best_ask_order = ask_level->getBest();
         common::InfoOrder best_bid_order = bid_level->getBest(); 
         if (best_ask_order.volume < best_bid_order.volume) {
-            //std::cout << "\n1\n";
             best_bid_order.volume -= best_ask_order.volume;
-            ask[best_bid_order.price].modify(best_bid_order.full_order.timestamp_exchange, best_bid_order);
-            //std::cout << "\n2\n";
-            nlohmann::json data_ask = best_ask_order.full_order;
+            ask[best_bid_order.price].modify(best_bid_order.full_order->timestamp_exchange, best_bid_order);
+            nlohmann::json data_ask = *(best_ask_order.full_order.get());
             std::string ask = data_ask.dump();
             //producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(ask));
-            //ask_level->second->remove(*(best_ask_order.get()));
-            //std::cout << "\n3\n";
             remove(best_ask_order);
-            //std::cout << "\n4\n";
         } else if (best_ask_order.volume > best_bid_order.volume) {
-            //std::cout << "\n2\n";
-            //std::cout << "\n5\n";
             best_ask_order.volume -= best_bid_order.volume;
-            ask[best_ask_order.price].modify(best_ask_order.full_order.timestamp_exchange, best_ask_order);
-            //std::cout << "\n6\n";
-            nlohmann::json data_bid = best_ask_order.full_order;
+            ask[best_ask_order.price].modify(best_ask_order.full_order->timestamp_exchange, best_ask_order);
+            nlohmann::json data_bid = *(best_ask_order.full_order.get());
             //data_bid["order_status"] = common::OrderStatus::FINISHED;
             std::string bid = data_bid.dump();
             //producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(bid));
-            //bid_level->second->remove(*(best_bid_order.get()));
-            //std::cout << "\n7\n";
             remove(best_bid_order);
-            //std::cout << "\n8\n";
-            //this->remove(best_bid_order);
         } else {
-            //std::cout << "\n3\n";
-            nlohmann::json data_ask = best_ask_order.full_order;
+            nlohmann::json data_ask = *(best_ask_order.full_order.get());
             //data_ask["order_status"] = common::OrderStatus::FINISHED;
             std::string ask = data_ask.dump();
             //producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(ask));
-            nlohmann::json data_bid = best_ask_order.full_order;
+            nlohmann::json data_bid = *(best_ask_order.full_order.get());
             //data_bid["order_status"] = common::OrderStatus::FINISHED;
             std::string bid = data_bid.dump();
             //producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(bid));
-            //ask_level->second->remove(*(best_ask_order.get()));
-            //bid_level->second->remove(*(best_bid_order.get()));
-            //std::cout << "\n9\n";
             remove(best_ask_order);
-            //std::cout << "\n10\n";
             remove(best_bid_order);
-            //std::cout << "\n11\n";
         }
 
         ask_level = getLevel(common::OrderType::Ask);
         bid_level = getLevel(common::OrderType::Bid);
-        //std::cout << "Here2:\n";
     }
-    std::cout << "\nHere_ask: ";
+    /*std::cout << "\nHere_ask: ";
     for (auto& [k, v] : ask) {
         std::cout << v << " ";
     }
@@ -95,7 +75,7 @@ void Matcher::resolve_orders() {
     for (auto& [k, v] : bid) {
         std::cout << v << " ";
     }
-    std::cout << "\n";
+    std::cout << "\n";*/
 }
 
 void Matcher::poll() {

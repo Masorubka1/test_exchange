@@ -10,7 +10,7 @@ namespace common {
 OrderBookLevel::OrderBookLevel(OrderType t) : type(t) {};
 
 void OrderBookLevel::add(const InfoOrder& order) {
-    level.insert({order.full_order.timestamp_exchange, order});
+    level.insert({order.full_order->timestamp_exchange, order});
 }
 
 size_t OrderBookLevel::size() const noexcept {
@@ -34,11 +34,11 @@ void OrderBookLevel::modify(int64_t ts, InfoOrder& order) {
 }
 
 void OrderBookLevel::remove(InfoOrder& order) noexcept {
-    level.erase(order.full_order.timestamp_exchange);
+    level.erase(order.full_order->timestamp_exchange);
 }
 
 void OrderBookLevel::remove(const InfoOrder* order) noexcept {
-    level.erase(order->full_order.timestamp_exchange);
+    level.erase(order->full_order->timestamp_exchange);
 }
 
 int OrderBookLevel::getPrice() noexcept {
@@ -60,7 +60,7 @@ void OrderBookLevel::clear() noexcept {
 }
 
 void OrderBook::add_(InfoOrder& order) noexcept {
-    if (order.full_order.order_type == OrderType::Ask) {
+    if (order.full_order->order_type == OrderType::Ask) {
         if (ask.find(order.price) == ask.end()) {
             //ask[order.price] = std::move(std::make_unique<OrderBookLevel>(OrderType::Ask));
             ask.insert({order.price, OrderBookLevel(OrderType::Ask)});
@@ -86,7 +86,7 @@ void OrderBook::remove_(InfoOrder& order) noexcept {
         std::cout << *v << " ";
     }
     std::cout << "\n";*/
-    if (order.full_order.order_type == OrderType::Ask) {
+    if (order.full_order->order_type == OrderType::Ask) {
         if (ask.find(order.price) != ask.end()) {
             ask[order.price].remove(order);
             if (ask[order.price].size() == 0) {

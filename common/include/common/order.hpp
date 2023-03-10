@@ -82,9 +82,9 @@ struct InfoOrder {
     std::string instrument;
     double volume = 0;
     int price = 0;
-    Order full_order;
+    std::shared_ptr<Order> full_order;
     
-    explicit InfoOrder(Order&& order) : instrument(order.instrument), volume(order.volume), price(order.price), full_order(order) {}
+    explicit InfoOrder(Order&& order) : instrument(order.instrument), volume(order.volume), price(order.price), full_order(std::make_shared<Order>(order)) {}
     InfoOrder() = default;
     friend bool operator<(const InfoOrder& a, const InfoOrder& b);
     friend std::ostream& operator<<(std::ostream& os, const InfoOrder& order);
