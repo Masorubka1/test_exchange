@@ -29,6 +29,8 @@ void MapClients::remove(const client::InfoClient& client) noexcept {
 }
 
 void MapClients::poll() {
+    static cppkafka::Consumer cons_(conf::config_user);
+    cons_.subscribe({"UserEvents"});
     cppkafka::Message msg = cons_.poll();
     std::cout << "clients1: \n";
     if (!msg) {

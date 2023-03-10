@@ -19,12 +19,11 @@ public:
         //cons_.subscribe({"OrderEvents"});
         cons_.assign({cppkafka::TopicPartition{"OrderEvents", 0}});
     }
-private:
-    void add(common::InfoOrder& order) noexcept;
-    void remove(common::InfoOrder& order) noexcept;
-    std::mutex m_mutex;
     void resolve_orders();
-    std::unique_ptr<common::OrderBook> orderbook;
+    //void add(common::InfoOrder& order) noexcept override;
+    //void remove(common::InfoOrder& order) noexcept override;
+private:
+    std::mutex m_mutex;
     cppkafka::Consumer cons_;
 };
 

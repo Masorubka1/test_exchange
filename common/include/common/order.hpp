@@ -41,25 +41,18 @@ struct Order {
     int64_t timestamp_user;
     int64_t timestamp_exchange;
     double volume = 0;
-    double price = 0;
+    int price = 0;
     bool is_limit = false;
-
-    /*explicit Order(std::string instrument_, 
-    std::string hash_client_,
-    OrderType order_type_, 
-    OrderStatus order_status_, 
-    ExchangeType exchange_type_, 
-    int64_t timestamp_user_,
-    int64_t timestamp_exchange_,
-    double volume_,
-    double price_,
-    bool is_limit_) : instrument(instrument_),  hash_client(hash_client_),
-    order_type(order_type_), order_status(order_status_), timestamp_user(timestamp_user_),
-    timestamp_exchange(timestamp_exchange_), volume(volume_), price(price_), is_limit(is_limit_) {}*/
 
     friend OrderType string2OrderType(std::string str);
     friend ExchangeType string2ExchangeType(std::string str);
+    
+    bool operator==(const Order &order) const {
+        return std::tie(instrument, hash_client, order_type, exchange_type, price, volume) == 
+            std::tie(order.instrument, order.hash_client, order.order_type, order.exchange_type, order.price, order.volume);
+    }
 };
+
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Order, instrument, hash_client, order_type, order_status, exchange_type, timestamp_user, timestamp_exchange, volume, price, is_limit);
 
@@ -85,28 +78,30 @@ inline ExchangeType string2ExchangeType(std::string str) {
     }
 }
 
-
-/*struct hash
-{
-    std::size_t operator() (const Client &client) const
-    {
-        std::size_t h1 = std::hash<string_view>()(node.instrument);
-        std::size_t h2 = std::hash<string_view>()(node.client_hash);
-        return h1 ^ h2;
-    }
-};*/
-
 struct InfoOrder {
-    std::string_view instrument;
+    std::string instrument;
     double volume = 0;
-    double price = 0;
-    std::shared_ptr<Order> full_order;
+    int price = 0;
+    Order full_order;
     
-    explicit InfoOrder(Order&& order) : instrument(order.instrument), volume(order.volume), price(order.price), full_order(std::make_shared<Order>(std::move(order))) {}
+    explicit InfoOrder(Order&& order) : instrument(order.instrument), volume(order.volume), price(order.price), full_order(order) {}
 
     friend bool operator<(const InfoOrder& a, const InfoOrder& b);
     friend std::ostream& operator<<(std::ostream& os, const InfoOrder& order);
+    
+    bool operator==(const InfoOrder &order) const {
+        return std::tie(instrument, volume, price) == 
+            std::tie(order.instrument, order.price, order.volume);
+    }
 };
+
+inline int hash(const InfoOrder* order)
+{
+    int h1 = std::hash<std::string>()(order->instrument);
+    int h2 = std::hash<double>()(order->volume);
+    int h3 = std::hash<int>()(order->price);
+    return h1 ^ h2;
+}
 
 inline bool operator<(const InfoOrder& a, const InfoOrder& b) {
         return a.price < b.price;

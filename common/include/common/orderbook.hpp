@@ -15,14 +15,14 @@
 namespace common {
 
 struct OrderBookCMP {
-    bool operator()(const common::InfoOrder& a, const common::InfoOrder& b) const
+    bool operator()(const std::shared_ptr<common::InfoOrder> a, const std::shared_ptr<common::InfoOrder> b) const
     {
-        switch (a.full_order->order_type) {
+        switch (a->full_order.order_type) {
             case common::OrderType::Ask:
-                return a.price < b.price || (a.price == b.price && a.full_order->timestamp_exchange < b.full_order->timestamp_exchange);
+                return a->price < b->price || (a->price == b->price && a->full_order.timestamp_exchange < b->full_order.timestamp_exchange);
                 break;
             case common::OrderType::Bid:
-                return a.price > b.price || (a.price == b.price && a.full_order->timestamp_exchange < b.full_order->timestamp_exchange);
+                return a->price > b->price || (a->price == b->price && a->full_order.timestamp_exchange < b->full_order.timestamp_exchange);
                 break;
             default:
                 assert(false);
@@ -37,20 +37,20 @@ struct OrderBookCMP {
 class OrderBookLevel {
 public:
     explicit OrderBookLevel(OrderType t);
-    void add(InfoOrder& a);
+    void add(const InfoOrder& a);
     size_t size() const noexcept;
-    void remove(const InfoOrder& a) noexcept;
-    int remove(int n) noexcept;
+    void remove(InfoOrder& a) noexcept;
+    void remove(int n) noexcept;
     void clear() noexcept;
-    double getPrice() const noexcept;
-    InfoOrder getBest() noexcept;
+    int getPrice() noexcept;
+    InfoOrder* getBest() noexcept;
     friend std::ostream& operator<<(std::ostream& os, const OrderBookLevel& book);
     ~OrderBookLevel() {
         level.clear();
     }
 private:
     OrderType type;
-    std::set<InfoOrder, OrderBookCMP> level;
+    std::set<std::shared_ptr<InfoOrder>, OrderBookCMP> level;
 };
 
 class OrderBook {
@@ -58,14 +58,15 @@ public:
     bool is_empty() const;
     void add(InfoOrder& order);
     void remove(InfoOrder& order);
-    double get_price();
-    void match();
+    int getPrice();
     friend std::ostream& operator<<(std::ostream& os, const OrderBook& book);
+    OrderBook() = default;
 protected:
-    std::map<double, std::unique_ptr<OrderBookLevel>> ask;  //will use price as key
-    std::map<double, std::unique_ptr<OrderBookLevel>> bid;
-    void add_(InfoOrder order) noexcept;
-    void remove_(InfoOrder&& order) noexcept;
+    std::map<int, std::unique_ptr<OrderBookLevel>> ask;  //will use price as key
+    std::map<int, std::unique_ptr<OrderBookLevel>> bid;
+    void add_(InfoOrder& order) noexcept;
+    void remove_(InfoOrder& order) noexcept;
+    OrderBookLevel* getLevel(OrderType t);
 };
 
 }

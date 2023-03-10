@@ -24,12 +24,13 @@ public:
 	//~MapClients();
 	void poll();
 private:
-	MapClients() : cons_(conf::config_user) {
+	/*MapClients() : cons_(conf::config_user) {
 		//cons_ = new cppkafka::Consumer(conf::config_user);
 		cons_.subscribe({"UserEvents"});
-	};
+	};*/
+	MapClients() {}
 	std::map<int, client::InfoClient> registered_users;
-	cppkafka::Consumer cons_;
+	//cppkafka::Consumer cons_;
 };
 
 }

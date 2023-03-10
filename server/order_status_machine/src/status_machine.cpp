@@ -47,7 +47,7 @@ void statusMachine::poll() {
     if (msg.get_key() == "Add") {
         add(order);
     } else if (msg.get_key() == "Finished") {
-        check(order)->full_order->order_status = common::OrderStatus::FINISHED;
+        check(order)->full_order.order_status = common::OrderStatus::FINISHED;
     } else if (msg.get_key() == "Remove") {
         remove(order);
     } else {

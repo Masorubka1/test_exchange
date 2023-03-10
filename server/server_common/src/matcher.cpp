@@ -1,65 +1,93 @@
 #include "server_common/matcher.hpp"
 #include <cppkafka/producer.h>
+#include <cstddef>
+#include <iostream>
 
 namespace server_common {
 
-void Matcher::add(common::InfoOrder& order) noexcept {
-    std::scoped_lock lock(m_mutex);
-    orderbook->add(order);
+/*void Matcher::add(common::InfoOrder& order) noexcept {
+    //std::scoped_lock lock(m_mutex);
+    add_(order);
 }
 
 void Matcher::remove(common::InfoOrder& order) noexcept {
-    std::scoped_lock lock(m_mutex);
-    std::cout << "here";
-    orderbook->remove(order);
-}
+    //std::scoped_lock lock(m_mutex);
+    remove_(order);
+}*/
 
 void Matcher::resolve_orders() {
-    static cppkafka::Producer producer(conf::config_order);
+    //static cppkafka::Producer producer(conf::config_order);
     std::scoped_lock lock(m_mutex);
-    auto ask_iter = ask.begin();
-    auto bid_iter = bid.begin();
-    if (ask_iter->second->getPrice() > get_price()) {
+    auto ask_iter = getLevel(common::OrderType::Ask);
+    auto bid_iter = getLevel(common::OrderType::Bid);
+
+    if (ask_iter == nullptr || bid_iter == nullptr) {
         return;
     }
-    while (ask_iter->second->getPrice() < bid_iter->second->getPrice()) {
-        if (ask_iter->second->size() == 0) {
-            ++ask_iter;
-            continue;
-        }
-        if (bid_iter->second->size() == 0) {
-            ++bid_iter;
-            continue;
-        }
-        auto best_ask_order = ask_iter->second->getBest();
-        auto best_bid_order = bid_iter->second->getBest(); 
-        if (best_ask_order.volume < best_bid_order.volume) {
-            best_bid_order.volume -= best_ask_order.volume;
-            nlohmann::json data_ask = *(best_ask_order.full_order);
-            //data_ask["order_status"] = common::OrderStatus::FINISHED;
+    std::cout << "\nHere_ask: ";
+    for (auto& [k, v] : ask) {
+        std::cout << *v << " ";
+    }
+    std::cout << "\nHere_bid: ";
+    for (auto& [k, v] : bid) {
+        std::cout << *v << " ";
+    }
+    std::cout << "\n";
+    while (ask_iter != nullptr && bid_iter != nullptr && (ask_iter->getPrice() <= bid_iter->getPrice())) {
+        common::InfoOrder* best_ask_order = ask_iter->getBest();
+        common::InfoOrder* best_bid_order = bid_iter->getBest(); 
+        if (best_ask_order->volume < best_bid_order->volume) {
+            //std::cout << "\n1\n";
+            best_bid_order->volume -= best_ask_order->volume;
+            nlohmann::json data_ask = best_ask_order->full_order;
             std::string ask = data_ask.dump();
-            producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(ask));
-            ask_iter->second->remove(1);
-        } else if (best_ask_order.volume > best_bid_order.volume) {
-            best_ask_order.volume -= best_bid_order.volume;
-            nlohmann::json data_bid = *(best_ask_order.full_order.get());
-            data_bid["order_status"] = common::OrderStatus::FINISHED;
-            std::string bid = data_bid.dump();
-            producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(bid));
-            bid_iter->second->remove(1);
-        } else {
-            nlohmann::json data_ask = *(best_ask_order.full_order);
-            //data_ask["order_status"] = common::OrderStatus::FINISHED;
-            std::string ask = data_ask.dump();
-            producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(ask));
-            nlohmann::json data_bid = *(best_ask_order.full_order);
+            //producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(ask));
+            //ask_iter->second->remove(*(best_ask_order.get()));
+            remove(*best_ask_order);
+        } else if (best_ask_order->volume > best_bid_order->volume) {
+            //std::cout << "\n2\n";
+            best_ask_order->volume -= best_bid_order->volume;
+            nlohmann::json data_bid = best_ask_order->full_order;
             //data_bid["order_status"] = common::OrderStatus::FINISHED;
             std::string bid = data_bid.dump();
-            producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(bid));
-            ask_iter->second->remove(1);
-            bid_iter->second->remove(1);
+            //producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(bid));
+            //bid_iter->second->remove(*(best_bid_order.get()));
+            remove(*best_bid_order);
+            //this->remove(best_bid_order);
+        } else {
+            //std::cout << "\n3\n";
+            nlohmann::json data_ask = best_ask_order->full_order;
+            //data_ask["order_status"] = common::OrderStatus::FINISHED;
+            std::string ask = data_ask.dump();
+            //producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(ask));
+            nlohmann::json data_bid = best_ask_order->full_order;
+            //data_bid["order_status"] = common::OrderStatus::FINISHED;
+            std::string bid = data_bid.dump();
+            //producer.produce(cppkafka::MessageBuilder("OrderEvents").key("Finished").payload(bid));
+            //ask_iter->second->remove(*(best_ask_order.get()));
+            //bid_iter->second->remove(*(best_bid_order.get()));
+            remove(*best_ask_order);
+            remove(*best_bid_order);
+        }
+
+        if (ask_iter == nullptr) {
+            //std::cout << "\n5\n";
+            ask_iter = getLevel(common::OrderType::Ask);
+        }
+        if (bid_iter == nullptr) {
+            //std::cout << "\n6\n";
+            bid_iter = getLevel(common::OrderType::Bid);
         }
     }
+    std::cout << "\nHere_ask: ";
+    for (auto& [k, v] : ask) {
+        std::cout << *v << " ";
+    }
+    std::cout << "\nHere_bid: ";
+    for (auto& [k, v] : bid) {
+        std::cout << *v << " ";
+    }
+    std::cout << "\n";
 }
 
 void Matcher::poll() {
@@ -92,7 +120,7 @@ void Matcher::poll() {
 		// ...
     }
     resolve_orders();
-    std::cout << *orderbook << "\n";
+    //std::cout << ask << "\n";
     //std::cout << "size: " << registered_users.size() << "\n";
     //return;
 }

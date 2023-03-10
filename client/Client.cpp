@@ -101,11 +101,13 @@ int main()
                 case 2:
                 {
                     nlohmann::json data;
+                    data["instrument"] = "USD";
                     data["hash_client"] = "1234";
                     data["order_type"] = "Ask";
                     data["order_status"] = "GOT";
                     data["exchange_type"] = "SPOT";
                     data["timestamp_user"] = server_common::Timer::now();
+                    data["timestamp_exchange"] = server_common::Timer::now();
                     data["price"] = double(10);
                     data["volume"] = double(10);
                     SendMessage(s, my_id, Requests::Transaction, data);
